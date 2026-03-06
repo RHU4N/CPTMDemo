@@ -9,14 +9,14 @@
 
     <main class="admin-content">
       <!-- Tela principal -->
-      <div v-if="!abrindoFormulario && !abrindoHistorico">
+      <div v-if="!abrindoFormulario && !abrindoHistorico && !abrindoAdminUsers">
         <p class="intro-text">Escolha uma das funcionalidades abaixo ou veja as inspeções recentes:</p>
 
         <!-- Botões -->
         <div class="button-group">
           <AppButton :icon="inspecaoIcon" @click="abrindoFormulario = true">Inspeção</AppButton>
           <AppButton :icon="historicoIcon" @click="abrindoHistorico = true">Histórico</AppButton>
-          <AppButton :icon="adminIcon" @click="abrindoAdmin = true">Admin</AppButton>
+          <AppButton :icon="adminIcon" @click="abrindoAdminUsers = true">Admin</AppButton>
           <AppButton :icon="logsIcon" @click="abrindoLogs = true">Logs</AppButton>
           <AppButton :icon="chamadosIcon" @click="abrindoChamados = true">Chamados</AppButton>
         </div>
@@ -27,7 +27,7 @@
             <Mapa :usuarios="usuarios" :admin-loc="adminLoc" />
           </div>
           <div class="lista-usuarios">
-            <h3>Usuários</h3>
+            <h3>Inspetores</h3>
             <ul>
               <li v-for="u in usuarios" :key="u.id">
                 {{ u.nome }} - <span :class="u.status">{{ u.status }}</span>
@@ -62,8 +62,14 @@
         @fechar="abrindoHistorico = false"
       />
 
+      <!-- Tela de AdminUsers -->
+      <AdminUsers
+        v-if="abrindoAdminUsers"
+        :usuarios="usuarios"
+        @fechar="abrindoAdminUsers = false"
+      />
+
       <!-- Outras telas -->
-      <div v-if="abrindoAdmin"><p>Tela de administração</p></div>
       <div v-if="abrindoLogs"><p>Tela de logs</p></div>
       <div v-if="abrindoChamados"><p>Tela de chamados</p></div>
     </main>
@@ -77,6 +83,7 @@ import AppButton from "../components/AppButton.vue"
 import InspectionList from "../components/InspectionList.vue"
 import InspectionForm from "../components/InspectionForm.vue"
 import Historico from "./Historico.vue"
+import AdminUsers from "./AdminUsers.vue"
 import Mapa from "../components/mapa.vue"
 
 // Ícones
@@ -89,7 +96,7 @@ import chamadosIcon from "../assets/chamados.png"
 // Flags
 const abrindoFormulario = ref(false)
 const abrindoHistorico = ref(false)
-const abrindoAdmin = ref(false)
+const abrindoAdminUsers = ref(false)
 const abrindoLogs = ref(false)
 const abrindoChamados = ref(false)
 
@@ -101,20 +108,21 @@ const inspecoes = reactive([
   { id: 4, linha: 'Linha 4', data:'2026-03-05', hora:'11:30', status:'sync', usuario:'user3' },
 ])
 
-// Lista de usuários com coordenadas
+// Lista de usuários
 const usuarios = reactive([
-  { id:1, nome:'user1', status:'online', coords:[-23.55052, -46.633308] },
-  { id:2, nome:'user2', status:'offline', coords:[-23.56052, -46.643308] },
-  { id:3, nome:'user3', status:'online', coords:[-23.54052, -46.623308] },
+  { id:1, nome:'admin', status:'online', coords:[-23.55052, -46.633308] },
+  { id:2, nome:'user1', status:'online', coords:[-23.55152, -46.634308] },
+  { id:3, nome:'user2', status:'offline', coords:[-23.55252, -46.635308] },
+  { id:4, nome:'user3', status:'online', coords:[-23.55352, -46.636308] },
 ])
 
-// Admin loc (vai pegar geolocalização)
+// Admin loc
 const adminLoc = ref(null)
 if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(pos=>{
     adminLoc.value = [pos.coords.latitude, pos.coords.longitude]
   }, ()=> {
-    adminLoc.value = [-23.55052, -46.633308] // fallback
+    adminLoc.value = [-23.55052, -46.633308]
   })
 }
 
@@ -151,7 +159,7 @@ function finalizarFormulario(dadosFormulario){
 const tituloHeader = computed(()=>{
   if(abrindoFormulario.value) return "Formulário de Inspeção"
   if(abrindoHistorico.value) return "Histórico de Inspeções"
-  if(abrindoAdmin.value) return "Administração"
+  if(abrindoAdminUsers.value) return "Gerenciamento de Usuários"
   if(abrindoLogs.value) return "Logs"
   if(abrindoChamados.value) return "Chamados"
   return "Bem-vindo, Admin"
@@ -161,7 +169,7 @@ const tituloHeader = computed(()=>{
 function voltarTelaInicial(){
   abrindoFormulario.value=false
   abrindoHistorico.value=false
-  abrindoAdmin.value=false
+  abrindoAdminUsers.value=false
   abrindoLogs.value=false
   abrindoChamados.value=false
 }
