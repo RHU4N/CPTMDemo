@@ -1,17 +1,22 @@
 <template>
   <div class="user-container">
-    <!-- Header -->
-    <AppHeader title="Bem-vindo, Usuário" @open-configs="abrirConfigs" />
+    <!-- Header único -->
+<AppHeader 
+  :title="tituloHeader" 
+  @open-configs="abrirConfigs" 
+  @click-logo="voltarTelaInicial"
+/>
 
     <!-- Conteúdo principal -->
     <main class="user-content">
-      <!-- Mostrar botões ou formulário -->
-      <div v-if="!abrindoFormulario">
+
+      <!-- Tela principal do user -->
+      <div v-if="!abrindoFormulario && !abrindoHistorico">
         <p class="intro-text">Escolha uma das funcionalidades abaixo ou veja suas inspeções recentes:</p>
 
         <div class="button-group">
           <AppButton :icon="inspecaoIcon" @click="abrindoFormulario = true">Inspeção</AppButton>
-          <AppButton :icon="historicoIcon" @click="abrirHistorico">Histórico</AppButton>
+          <AppButton :icon="historicoIcon" @click="abrindoHistorico = true">Histórico</AppButton>
         </div>
 
         <InspectionList
@@ -24,30 +29,43 @@
         />
       </div>
 
-      <!-- Formulário de Inspeção -->
+      <!-- Formulário de inspeção -->
       <InspectionForm
-        v-else
+        v-if="abrindoFormulario"
         :inspections="inspecoes"
         @finalizar="finalizarFormulario"
+        @fechar="abrindoFormulario = false"
+      />
+
+      <!-- Tela de histórico -->
+      <Historico
+        v-if="abrindoHistorico"
+        :inspections="inspecoes"
+        @fechar="abrindoHistorico = false"
       />
     </main>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from "vue"
+import { reactive, ref, computed } from "vue"
 import AppHeader from "../components/AppHeader.vue"
 import AppButton from "../components/AppButton.vue"
 import InspectionList from "../components/InspectionList.vue"
 import InspectionForm from "../components/InspectionForm.vue"
+import Historico from "./Historico.vue"
 
-// Ícones dos botões
 import inspecaoIcon from "../assets/inspecao.png"
 import historicoIcon from "../assets/historico.png"
 
-// Controle de exibição do formulário
+// Flags de exibição
 const abrindoFormulario = ref(false)
+const abrindoHistorico = ref(false)
 
+function voltarTelaInicial() {
+  abrindoFormulario.value = false
+  abrindoHistorico.value = false
+}
 // Lista de inspeções
 const inspecoes = reactive([
   { id: 1, linha: 'Linha 1', data:'2026-03-05', hora:'10:00', status:'enviado' },
@@ -57,46 +75,20 @@ const inspecoes = reactive([
 ])
 
 // --------------------- Funções ---------------------
-// Abrir histórico
-function abrirHistorico() { 
-  alert("Abrir histórico") 
-}
-
-// Abrir configs
-function abrirConfigs() { 
-  alert("Abrir configurações") 
-}
-
-// Editar inspeção
-function editarInspecao(inspecao) {
-  alert(`Editar inspeção: ${inspecao.linha}`)
-}
-
-// Apagar inspeção
+function abrirConfigs() { alert("Abrir configurações") }
+function editarInspecao(inspecao) { alert(`Editar inspeção: ${inspecao.linha}`) }
 function apagarInspecao(inspecao) {
   const index = inspecoes.findIndex(i => i.id === inspecao.id)
   if(index !== -1 && confirm("Tem certeza que deseja apagar esta inspeção?")){
     inspecoes.splice(index,1)
   }
 }
-
-// Enviar inspeção para banco
 function enviarInspecao(inspecao){
   inspecao.status = 'sync'
-  // Simular envio com timeout
-  setTimeout(() => {
-    inspecao.status = 'enviado'
-  }, 2000)
+  setTimeout(() => inspecao.status = 'enviado', 2000)
 }
-
-// Cancelar envio (pendenteSync)
-function cancelarEnvio(inspecao){
-  inspecao.status = 'pendente'
-}
-
-// Finalizar formulário de inspeção
+function cancelarEnvio(inspecao){ inspecao.status = 'pendente' }
 function finalizarFormulario(dadosFormulario){
-  // Criar nova inspeção
   const now = new Date()
   const novaInspecao = {
     id: inspecoes.length + 1,
@@ -106,9 +98,17 @@ function finalizarFormulario(dadosFormulario){
     status: 'pendente',
     respostas: dadosFormulario
   }
-  inspecoes.unshift(novaInspecao) // adiciona no topo
+  inspecoes.unshift(novaInspecao)
   abrindoFormulario.value = false
 }
+
+// --------------------- Computed ---------------------
+// Título dinâmico do header
+const tituloHeader = computed(() => {
+  if(abrindoFormulario.value) return "Formulário de Inspeção"
+  if(abrindoHistorico.value) return "Histórico de Inspeções"
+  return "Bem-vindo, Inspetor"
+})
 </script>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <template>
   <header class="app-header">
-    <img :src="logo" alt="Logo" class="logo" />
+    <img src="../assets/logoH.png" class="logo" alt="Logo" @click="$emit('click-logo')" />
     <h1 class="header-title">{{ title }}</h1>
     <button class="config-btn" @click="$emit('open-configs')">
       <!-- SVG minimalista -->
@@ -32,6 +32,7 @@ const props = defineProps({ title: { type: String, default: "Bem-vindo" } })
 
 .app-header .logo{
   height:40px;
+  cursor:pointer;
 }
 
 .app-header .header-title{
